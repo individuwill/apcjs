@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>APC Web</title>
+    <link href="./bower_components/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>APC Web</h1>
+      <p>You may now control the power!</p>
+        <div id="outlet_region">
+        </div>
+    </div>
+    <!-- ### Templates ### -->
+    <script type="text/template" id="outlet_list">
+      <table>
+          <thead>
+            <tr>
+              <th>Outlet #</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Control</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+      </table>
+    </script>
+
+    <script type="text/template" id="outlet_item_template">
+      <td><%= id %></td>
+      <td><%= name %></td>
+      <td><%= status %></td>
+      <td>
+        <% if(status === 'On') { %>
+          <button type="button" class="btn btn-danger js-offButton">Off</button>
+        <% } else { %>
+          <button type="button" class="btn btn-success js-onButton">On</button>
+        <% } %>
+        <button type="button" class="btn btn-warning js-rebootButton">Reboot</button> 
+      </td>
+    </script>
+    <!-- ### Scripts ### 
+      # Note: all marionette dependencies are included on install
+      # find them in './bower_components/marionette/public/javascripts/*.js'
+    -->
+    <script src="./bower_components/jquery/jquery.js"></script>
+    <script src="./bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="./bower_components/json2/json2.js"></script>
+    <script src="./bower_components/underscore/underscore.js"></script>
+    <script src="./bower_components/backbone/backbone.js"></script>
+    <script src="./bower_components/marionette/lib/backbone.marionette.js"></script>
+    <script type="text/javascript">
+      var App = new Marionette.Application();
+
+      App.Outlet = Backbone.Model.extend({
+        defaults: {
+          id: -1,
+          name: 'Unspecified',
+          status: 'Unknown'
+        }
+      });
+
+      App.OutletsCollection = Backbone.Collection.extend({
+        model: App.Outlet,
+        comparator: 'id',
+        url: '/outlets'
+      });
+
+      App.addRegions({
+        outletRegion: '#outlet_region'
+      });
+
+      App.OutletItemView = Marionette.ItemView.extend({
+        tagName: 'tr',
+        template: '#outlet_item_template',
+
+        events: {
+          'click .js-rebootButton': function(e) { this.changeStatusTo('Reboot'); },
+          'click .js-offButton': function(e) { this.changeStatusTo('Off'); },
+          'click .js-onButton': function(e) { this.changeStatusTo('On'); }
+        },
+
+        changeStatusTo: function(newStatus) {
+          this.model.save({status: newStatus}, 
+            {patch: true,
+            wait: true,
+            error: function(model, xhr, options) {
+              alert('There was problem updating the outlet. See console for details.');
+              console.log(xhr);
+              var error = xhr.responseJSON.error;
+              console.log(error.message);
+              console.log(error.stack);
+            }
+          });
+        },
+
+        modelEvents: {
+          'sync': function() { console.log('syncing'); },
+          'change': function() { console.log('changing'); this.render(); }
+        }
+
+      });
+
+      App.OutletsView = Marionette.CompositeView.extend({
+        tagName: 'table',
+        className: "table table-hover",
+        template: '#outlet_list',
+        itemView: App.OutletItemView,
+        itemViewContainer: 'tbody'
+      });
+
+      App.on('initialize:after', function() {
+        console.log('App has started!');
+        App.outletsCollection = new App.OutletsCollection();
+        var f = function(callNext) {
+          App.outletsCollection.fetch({
+            error: function(collection, response, options) { 
+              alert('Failed to retrieve outlets from server. Check console for details.');
+              var error = esponse.responseJSON.error;
+              console.log(error.message);
+              console.log(error.stack);
+            }, 
+            success: function() { /*setTimeout(function() { callNext(f); }, 5000);*/ }
+          })
+        }
+        f(f);
+        var outletsView = new App.OutletsView({
+            collection: App.outletsCollection
+        });
+        App.outletRegion.show(outletsView);
+      });
+      App.start();
+    </script>
+  </body>
+
+</html>

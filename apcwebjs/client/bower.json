@@ -1,0 +1,22 @@
+{
+  "name": "apcwebjs",
+  "version": "0.0.0",
+  "authors": [
+    "Will Smith <wsmith85@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "marionette": "1.4.1",
+    "jquery": "2.0.3",
+    "bootstrap": "3.0.3",
+    "json2": "*",
+    "socket.io": "0.9.15"
+  }
+}

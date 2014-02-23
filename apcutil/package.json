@@ -1,0 +1,9 @@
+{
+  "name" : "apcutil",
+  "version": "1.0.0",
+  "readmeFilename": "README",
+  "dependencies" : {
+    "net-snmp": "1.1.11",
+    "underscore": "1.5.2"
+  }
+}
